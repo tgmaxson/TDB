@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for Dir in $(find $1 -maxdepth 15 -type d )
+do
+ $TDB_IMPORT $Dir ~/.tmpdb.db
+done

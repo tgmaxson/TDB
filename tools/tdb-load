@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rm ~/.tmpdb.db ~/.tmpdb.db.lock 2> /dev/null
+cp $1 ~/.tmpdb.db

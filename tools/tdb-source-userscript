@@ -1,0 +1,2 @@
+#!/bin/bash
+export TDB_IMPORT=$1

@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+from tdb.vaspdb import *
+from tdb.utils import ReportMessage
+from ase.io import read
+from ase.db import *
+
+import sys
+import os
+
+output = {}
+workdir = sys.argv[1]
+db = connect(sys.argv[2])
+
+if len(sys.argv) > 3:
+    backupdir = sys.argv[3]
+else:
+    backupdir = None
+
+files = FileCheck(workdir, ("KPOINTS","INCAR","OUTCAR","POSCAR","CONTCAR","POTCAR"))
+if not files == " ":
+    ReportMessage("ERROR: Files are missing("+files+"),  cannot continue: "+workdir)
+calcdata = CalcData(workdir)
+
+found, status = GenerateIDFile(output, workdir, "/ID.db")#, overwrite = True)
+ReportMessage(status+workdir, ex=False)
+if found:
+   try:
+       db.get(CalcID=output["CalcID"])
+       ReportMessage("SUCCESS: Stopping because calculation is already in database: "+workdir)
+   except KeyError:
+       ReportMessage("STATUS: ID found but not in database, processing: "+workdir, ex=False)
+   except Exception:
+       ReportMessage("ERROR: Duplicate ID found?: "+workdir)
+else:
+     ReportMessage("STATUS: Processing Data", ex=False)
+
+atoms = read(workdir+"/POSCAR")
+WriteFunctional(output, calcdata)
+WriteDir(output, workdir)
+WriteEnergy(output, calcdata)
+WriteGGA(output, calcdata)
+WriteVDW(output, calcdata)
+WriteVASP(output)
+WriteForce(output, calcdata, atoms)
+WritePrecision(output, calcdata)
+WriteConverged(output, calcdata)
+WriteKPoints(output, calcdata)
+WriteCell(output, calcdata)
+WriteRelaxation(output, calcdata)
+WriteSystemFormula(output, atoms)
+WriteDipoleCorrection(output, calcdata)
+WriteCustom(output, workdir)
+WriteSpin(output, calcdata)
+
+error, slab_layers = WriteSlabFilm(output, atoms)
+if error:
+    ReportMessage(error+workdir)
+
+mags = []
+for atom in atoms:
+    if not slab_layers[atom.tag] and not (atom.number == 1 or atom.number == 8):
+        mags.append(True)
+    else:
+        mags.append(False)
+
+error = WriteFilmMag(output, calcdata, relevant=mags)
+if error:
+    ReportMessage(error+workdir)
+
+baders = []
+for atom in atoms:
+    if not slab_layers[atom.tag]:
+        baders.append(True)
+    else:
+        baders.append(False)
+WriteBader(output, workdir, atoms, relevant=baders)
+
+if not backupdir == None:
+    realback = backupdir+"/"+output["CalcID"]
+    os.system("mkdir "+realback)
+    os.system("./backupData "+workdir+" "+realback)
+    os.system("tar -zcvf "+backupdir+"/"+output["CalcID"]+".tar.gz -C "+backupdir+" "+output["CalcID"])
+    os.system("rm -r "+realback)
+
+db.write(read(workdir+"/CONTCAR"), key_value_pairs=output)
+ReportMessage("SUCCESS: "+workdir)

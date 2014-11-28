@@ -1,0 +1,20 @@
+#!/bin/bash
+
+infile=$1
+outfile=$2
+bgcolor="white"
+w=`convert $infile -ping -format "%w" info:`
+h=`convert $infile -ping -format "%h" info:`
+
+if [ $w -gt $h ]
+then
+h=$w
+fi
+
+if [ $h -gt $w ]
+then
+w=$h
+fi
+
+
+convert $infile -gravity center -background $bgcolor -extent ${w}x${h} $outfile

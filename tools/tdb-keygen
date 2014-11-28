@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+import sys
+
+print "- Database Key Generator -"
+
+try:
+ output = {}
+ for d in open("db.dat").readlines():
+     D = d.replace("="," = ")
+     Dc = D.find("#")
+     if not Dc == -1:
+         D = D[:Dc]
+     D = D.split()
+     output[D[0]] = " ".join(D[2:])
+     print "- Current db.dat dictionary"
+     print output
+except:
+ output = {}
+ print "- 'db.dat' is not found or is invalid."
+
+saved = True
+
+while(True):
+ print "-Options \n --0) Exit \n --1) Clear \n --2) Show \n --3) Save \n --4) Add Custom \n --5) Add Surface Keys"
+ val = raw_input("")
+ if val[0] == "0":
+  if saved:
+   break
+  else:
+   print "You have not saved, please enter '!' to discard changes"
+   if raw_input()[0] == "!":
+    break
+ if val[0] == "1":
+  output = {}
+ if val[0] == "2":
+  print output
+ if val[0] == "3":
+  f = open("db.dat","w")
+  for k in output:
+   f.write(k+" = "+output[k]+"\n")
+  saved = True
+ if val[0] == "4":
+  print "Key? (No spaces,  only alphanumeric characters are supported)"
+  key = raw_input("")
+  if key.find(" ") == -1:
+   print "Value? (Anything goes,  but anything after a # is a comment that is likely to get removed by this script)"
+   value = raw_input("")
+   output[key] = value
+  saved = False
+ if val[0] == "5":
+  print "Miller Indices?"
+  output["Miller"] = raw_input("")
+  print "Unit Cell Notation EX: 2x2x4"
+  output["CellNotation"] = raw_input("") 
+
+
+
+
+
+
+
+
+
+

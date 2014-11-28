@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cp ~/.tmpdb.db $1

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ -e ~/.tmpdb.db ]
+then
+ Time=`expr $(date +%s) - $(date +%s -r ~/.tmpdb.db)`
+ echo "${Time} seconds have elapsed since the last write to the database"
+fi
+$TDB_IMPORT $1 ~/.tmpdb.db

@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+from ase.db import connect
+from ase.visualize import view
+import os
+import sys
+
+db = connect(os.path.expanduser("~/.tmpdb.db"))
+
+data = []
+
+data.append(["Calculator","SystemFormula","Converged","E0","NoSigma0","NoEntropy0","Force","MagMoment",
+             "Functional","EnergyDiff","ForceDiff","DipoleCorrection","Spin","Precision","EnergyCutoff",
+             "PseudoPotential","ElectronicSteps", "MaxElectronicSteps","GeometricSteps","MaxGeometricSteps",
+             "VDW","VDW_U_All","VDW_L_All","VDW_J_All","MagMomentIn","POSOrder","POTOrder","POSPOTAgreement",
+             "KPoints_X","KPoints_Y","KPoints_Z","KGammaCentered","KReduced","Miller","CellNotation","CellScale",
+             "Cell_XX","Cell_XY","Cell_XZ","Cell_YX","Cell_YY","Cell_YZ","Cell_ZX","Cell_ZY","Cell_ZZ",
+             "Directory","CalcID"])
+atoms = [None]
+             
+for thing in db.select():
+    id = str(thing["CalcID"])
+    atoms.append(db.get_atoms(CalcID = id))
+    thisthing = []
+    for id in data[0]:
+        try:
+            thisthing.append(str(thing[id]))
+        except:
+            thisthing.append("")
+    print thisthing
+    data.append(thisthing)
+    
+#try:
+from ase.io import write
+import struct
+def getPngSize(filename):
+    with open(filename) as data:
+        w, h = struct.unpack(">LL", data.read(25)[16:24])
+        width = int(w)
+        height = int(h)
+        return float(width), float(height)
+
+def makeImage(Atoms, fout, rot = (0,0,0), rep = (1,1,1)):
+    def rotc(tup):
+        return str(tup[0])+"x,"+str(tup[1])+"y,"+str(tup[2])+"z"
+    write(fout, [Atoms * rep], rotation=rotc(rot),show_unit_cell=1)
+    os.system("squareimg "+fout+" "+fout)
+
+def tryFloat(val):
+    try:
+        return float(val)
+    except:
+        return val
+    
+rotsname = ["Z","-Z","X","-X","Y","-Y"]
+rots = [(0,0,0),(180,0,0),(90,0,0),(-90,0,0),(0,90,0),(0,-90,0)]    
+import tempfile
+import xlsxwriter
+workbook = xlsxwriter.Workbook('Output.xlsx')
+worksheet = workbook.add_worksheet("Data")
+widths = {}
+
+workdir = tempfile.mkdtemp()
+print "Temp: "+workdir
+for r, row in enumerate(data):
+    if not atoms[r] == None:
+        ws = workbook.add_worksheet(str(r+1))
+        for index, blah in enumerate(rotsname):
+            name = workdir+"/"+str(r+1)+"."+rotsname[index]+".png"
+            makeImage(atoms[r], name, rot = rots[index])
+            w,h = getPngSize(name)
+            s = 190/w
+            ws.insert_image(0,0,name,options={"x_offset":index*190,"x_scale":s,"y_scale":s})
+            ws.write(10, 1+(index*3), "^")
+            ws.write(11, 1+(index*3), "|")
+            ws.write(12, 1+(index*3), rotsname[index])
+            print name
+    for c, col in enumerate(row):
+        if c in widths:
+            if len(col) > widths[c]:
+                worksheet.set_column(c,c,len(col)*1.3)
+                widths[c]=len(col)
+        else:
+            worksheet.set_column(c,c,len(col)*1.3)
+            widths[c]=len(col)
+        worksheet.write(r, c, tryFloat(col))
+workbook.close()
+    
+#except ImportError:
+#    pass
