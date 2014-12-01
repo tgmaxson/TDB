@@ -2,5 +2,11 @@
 
 for Dir in $(find $1 -maxdepth 15 -type d )
 do
+ if [[ "$#" -eq 2 ]]; then
+  if [[ $Dir == *"$2"* ]]; then
+   echo "ERROR: Skipping '$Dir' because the path contains the text '$2'."
+   continue
+  fi
+ fi
  $TDB_IMPORT $Dir ~/.tmpdb.db
 done
