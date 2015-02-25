@@ -3,32 +3,41 @@ from ase.db import connect
 from ase.visualize import view
 import os
 import sys
+import operator
 
 db = connect(os.path.expanduser("~/.tmpdb.db"))
 
 data = []
 
-data.append(["Calculator","SystemFormula","Converged","E0","NoSigma0","NoEntropy0","Force","MagMoment",
-             "Functional","EnergyDiff","ForceDiff","DipoleCorrection","Spin","Precision","EnergyCutoff",
-             "PseudoPotential","ElectronicSteps", "MaxElectronicSteps","GeometricSteps","MaxGeometricSteps",
-             "VDW","VDW_U_All","VDW_L_All","VDW_J_All","MagMomentIn","POSOrder","POTOrder","POSPOTAgreement",
-             "KPoints_X","KPoints_Y","KPoints_Z","KGammaCentered","KReduced","Miller","CellNotation","CellScale",
-             "Cell_XX","Cell_XY","Cell_XZ","Cell_YX","Cell_YY","Cell_YZ","Cell_ZX","Cell_ZY","Cell_ZZ",
-             "Directory","CalcID"])
+header = ["Calculator","SystemFormula","Converged","E0","NoSigma0","NoEntropy0","Force","MagMoment",
+          "Functional","EnergyDiff","ForceDiff","DipoleCorrection","Spin","Precision","EnergyCutoff",
+          "PseudoPotential","ElectronicSteps", "MaxElectronicSteps","GeometricSteps","MaxGeometricSteps",
+          "VDW","VDW_U_All","VDW_L_All","VDW_J_All","MagMomentIn","POSOrder","POTOrder","POSPOTAgreement",
+          "KPoints_X","KPoints_Y","KPoints_Z","KGammaCentered","KReduced","Miller","CellNotation","CellScale",
+          "Cell_XX","Cell_XY","Cell_XZ","Cell_YX","Cell_YY","Cell_YZ","Cell_ZX","Cell_ZY","Cell_ZZ",
+          "Directory","CalcID"]
+
+directory_index = header.index("Directory")
+
 atoms = [None]
              
 for thing in db.select():
     id = str(thing["CalcID"])
     atoms.append(db.get_atoms(CalcID = id))
     thisthing = []
-    for id in data[0]:
+    for id in header:
         try:
             thisthing.append(str(thing[id]))
         except:
             thisthing.append("")
-    print thisthing
     data.append(thisthing)
-    
+
+data.sort(key=operator.itemgetter(directory_index), reverse=True)
+
+for i in data:
+    print i
+
+exit()
 #try:
 from ase.io import write
 import struct
